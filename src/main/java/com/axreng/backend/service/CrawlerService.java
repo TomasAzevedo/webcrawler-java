@@ -6,19 +6,18 @@ import com.axreng.backend.dto.SearchIdDTO;
 import com.axreng.backend.dto.StatusDTO;
 import com.axreng.backend.repository.SearchRepository;
 
-import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
  *
- * Classe responsável pela encapsular a lógica da aplicação.
+ * Classe responsável por encapsular a lógica da aplicação.
  *
  */
 public class CrawlerService {
 
-    private static final String BASE_URL = "http://hiring.axreng.com/";
-
+    public static String BASE_URL;
+    public static int MAX_RESULTS;
 
     /**
      *
@@ -34,7 +33,7 @@ public class CrawlerService {
         String searchId = generateSearchId();
 
         CompletableFuture.runAsync(() -> {
-            webCrawler.find(searchDTO.getKeyword(), BASE_URL, searchId);
+            webCrawler.find(searchDTO.getKeyword(), BASE_URL, MAX_RESULTS, searchId);
         });
 
         return new SearchIdDTO(searchId);

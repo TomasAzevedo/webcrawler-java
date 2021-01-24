@@ -20,12 +20,15 @@ public class WebCrawler {
 
 
     /**
+     *
      * Inicia o processo de busca em um determinado site.
      *
-     * @param keyword - palavra chave para a busca.
-     * @param root    - site que o algoritmo começar a procura.
+     * @param keyword    - palavra chave para a busca.
+     * @param root       - site que o algoritmo começar a procura.
+     * @param maxResults - número máximo de urls para buscar.
+     * @param searchId   - id da busca.
      */
-    public void find(String keyword, String root, String searchId) {
+    public void find(String keyword, final String root, int maxResults, String searchId) {
 
         try {
 
@@ -34,16 +37,14 @@ public class WebCrawler {
 
             Queue<String> queue = new LinkedList<>();
             Set<String> marked = new HashSet<>();
-            String urlBase = root;
 
             queue.add(root);
 
             while (!queue.isEmpty()) {
 
-                String crawledUrl = queue.poll();
+                StringBuilder crawledUrl = new StringBuilder(queue.poll());
 
-                //TODO Get from env var
-                if (marked.size() > 100) {
+                if (marked.size() > maxResults && maxResults > -1) {
                     SearchRepository.setStatus(statusDTO.getId(), StatusEnum.DONE);
                     return;
                 }
@@ -51,10 +52,10 @@ public class WebCrawler {
                 String content = getContent(crawledUrl, queue);
 
                 if (find(keyword, content)) {
-                    SearchRepository.addUrl(statusDTO.getId(), crawledUrl);
+                    SearchRepository.addUrl(statusDTO.getId(), crawledUrl.toString());
                 }
 
-                Stream<String> links = getLinks(content, urlBase);
+                Stream<String> links = getLinks(content, root);
 
                 links.forEach(link -> {
 
@@ -68,6 +69,8 @@ public class WebCrawler {
 
             }
 
+            SearchRepository.setStatus(statusDTO.getId(), StatusEnum.DONE);
+
         } catch (IOException ioe) {
             //TODO tratar erros
             System.out.println("Erro.");
@@ -79,8 +82,8 @@ public class WebCrawler {
     /**
      * Método que realiza a busca pela palavra chave.
      *
-     * @param keyword  - palavre chave da busca.
-     * @param content  - conteúdo retornado pela url.
+     * @param keyword - palavre chave da busca.
+     * @param content - conteúdo retornado pela url.
      */
     private boolean find(String keyword, String content) {
 
@@ -121,12 +124,13 @@ public class WebCrawler {
 
         List<String> links = new ArrayList<>();
 
-        Pattern pattern = Pattern.compile(hrefRegex);
+        //Pattern pattern = Pattern.compile(hrefRegex);
+        Pattern pattern = Pattern.compile("href\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
         Matcher matcher = pattern.matcher(content);
 
         while (matcher.find()) {
 
-            String link = getValidLink(matcher.group(), baseUrl);
+            String link = getValidLink(matcher.group(1), baseUrl);
 
             links.add(link);
 
@@ -146,7 +150,7 @@ public class WebCrawler {
      * @return
      * @throws IOException
      */
-    private String getContent(String crawledUrl, Queue<String> queue) throws IOException {
+    private String getContent(StringBuilder crawledUrl, Queue<String> queue) throws IOException {
 
         BufferedReader br = null;
         URL url = null;
@@ -156,15 +160,13 @@ public class WebCrawler {
 
             try {
 
-                url = new URL(Objects.requireNonNull(crawledUrl));
+                url = new URL(Objects.requireNonNull(crawledUrl.toString()));
                 br = new BufferedReader(new InputStreamReader(url.openStream()));
                 validUrl = true;
 
-            } catch (MalformedURLException mue) {
-                crawledUrl = queue.poll();
-                validUrl = false;
             } catch (IOException ioe) {
-                crawledUrl = queue.poll();
+                crawledUrl.setLength(0);
+                crawledUrl.append(queue.poll());
                 validUrl = false;
             }
 
@@ -179,9 +181,7 @@ public class WebCrawler {
 
         content = sb.toString();
 
-        if (br != null) {
-            br.close();
-        }
+        br.close();
 
         return content;
 
@@ -193,20 +193,18 @@ public class WebCrawler {
      * Se o link não tiver um endereço http o método assume que é um link interno do site.
      * Se o link não pertencer a url base não será considerado um link válido para busca.
      *
-     * @param group - href com o endereço concatenado.
+     * @param href - link to validate.
      * @return uma url válida.
      */
-    private static String getValidLink(String group, String baseUrl) {
-
-        String tmp = group.substring(group.indexOf("href=") + 6, group.length() - 1);
+    private static String getValidLink(String href, String baseUrl) {
 
         String url = "";
 
-        if (!group.contains("http")) {
-            url += baseUrl + tmp;
+        if (!href.contains("http")) {
+            url += baseUrl + href;
         } else {
-            if (tmp.contains(baseUrl)) {
-                url = tmp;
+            if (href.contains(baseUrl)) {
+                url = href;
             }
         }
 
