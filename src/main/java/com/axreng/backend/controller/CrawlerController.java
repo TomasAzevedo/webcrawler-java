@@ -5,8 +5,7 @@ import com.axreng.backend.dto.StatusDTO;
 import com.axreng.backend.service.CrawlerService;
 import com.axreng.backend.utils.ResponseError;
 
-import static com.axreng.backend.utils.JsonUtil.fromJson;
-import static com.axreng.backend.utils.JsonUtil.json;
+import static com.axreng.backend.utils.JsonUtil.*;
 import static spark.Spark.*;
 
 public class CrawlerController {
@@ -26,11 +25,25 @@ public class CrawlerController {
 
         }, json());
 
+
         post("/crawl", (req, res) -> crawlerService.search(fromJson(req.body(), SearchDTO.class)), json());
+
+
+        exception(IllegalArgumentException.class, (e, req, res) -> {
+            res.status(400);
+            res.body(toJson(new ResponseError(e)));
+        });
+
+
+        notFound((req, res) -> {
+            return toJson(new ResponseError("Method not found."));
+        });
+
 
         after((req, res) -> {
             res.type("application/json");
         });
+
 
     }
 

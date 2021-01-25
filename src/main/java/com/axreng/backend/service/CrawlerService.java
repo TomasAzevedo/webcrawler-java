@@ -25,6 +25,10 @@ public class CrawlerService {
      */
     public SearchIdDTO search(SearchDTO searchDTO) {
 
+        if (null == searchDTO || null == searchDTO.getKeyword() || searchDTO.getKeyword().isBlank()) {
+            throw new IllegalArgumentException("You must enter at least one keyword for the search.");
+        }
+
         WebCrawler webCrawler = new WebCrawler();
         String searchId = generateSearchId();
 
