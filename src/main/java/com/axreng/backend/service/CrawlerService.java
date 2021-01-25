@@ -10,9 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
- * Classe responsável por encapsular a lógica da aplicação.
- *
+ * Module that implements the Crawler.
  */
 public class CrawlerService {
 
@@ -20,12 +18,10 @@ public class CrawlerService {
     public static int MAX_RESULTS;
 
     /**
+     * Method that performs the search.
      *
-     * Método responsável pela busca.
-     *
-     * @param searchDTO - objeto que contém a keyword para busca.
-     *
-     * @return id da busca startada.
+     * @param searchDTO - object containing the search keyword.
+     * @return search id.
      */
     public SearchIdDTO search(SearchDTO searchDTO) {
 
@@ -33,7 +29,7 @@ public class CrawlerService {
         String searchId = generateSearchId();
 
         CompletableFuture.runAsync(() -> {
-            webCrawler.find(searchDTO.getKeyword(), BASE_URL, MAX_RESULTS, searchId);
+            webCrawler.search(searchDTO.getKeyword(), BASE_URL, MAX_RESULTS, searchId);
         });
 
         return new SearchIdDTO(searchId);
@@ -41,12 +37,10 @@ public class CrawlerService {
 
 
     /**
+     * Method that checks the status of the search.
      *
-     * Método que verifica o status da busca.
-     *
-     * @param id - identificador da busca realizada.
-     *
-     * @return status da busca e suas urls encontradas.
+     * @param id - search id.
+     * @return search status and their found urls.
      */
     public StatusDTO getStatus(String id) {
 
@@ -56,10 +50,9 @@ public class CrawlerService {
 
 
     /**
+     * Method that creates a unique search id.
      *
-     * Método que cria um id única para a busca.
-     *
-     * @return identificador único.
+     * @return unique id.
      */
     private final String generateSearchId() {
         return UUID.randomUUID().toString().replace("-", "");

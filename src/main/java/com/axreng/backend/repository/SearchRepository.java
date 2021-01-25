@@ -6,9 +6,7 @@ import com.axreng.backend.model.StatusEnum;
 import java.util.TreeMap;
 
 /**
- *
- * Classe que representa a camada de persistência da aplicação.
- *
+ * Class that represents the persistence layer.
  */
 public class SearchRepository {
 

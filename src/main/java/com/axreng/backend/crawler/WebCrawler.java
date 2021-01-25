@@ -3,11 +3,12 @@ package com.axreng.backend.crawler;
 import com.axreng.backend.dto.StatusDTO;
 import com.axreng.backend.model.StatusEnum;
 import com.axreng.backend.repository.SearchRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -16,19 +17,19 @@ import java.util.stream.Stream;
 
 public class WebCrawler {
 
-    private final String hrefRegex = "href=\\\"(.*?)\\\"";
+    private static Logger LOGGER = LoggerFactory.getLogger(WebCrawler.class);
+    private final String hrefRegex = "href\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>";
 
 
     /**
+     * Starts the search process on a particular website.
      *
-     * Inicia o processo de busca em um determinado site.
-     *
-     * @param keyword    - palavra chave para a busca.
-     * @param root       - site que o algoritmo começar a procura.
-     * @param maxResults - número máximo de urls para buscar.
-     * @param searchId   - id da busca.
+     * @param keyword    - keyword for the search..
+     * @param root       - site that the algorithm starts looking for.
+     * @param maxResults - maximum number of urls to fetch.
+     * @param searchId   - search id.
      */
-    public void find(String keyword, final String root, int maxResults, String searchId) {
+    public void search(String keyword, final String root, int maxResults, String searchId) {
 
         try {
 
@@ -62,7 +63,7 @@ public class WebCrawler {
                     if (!link.isEmpty() && !marked.contains(link)) {
                         marked.add(link);
                         queue.add(link);
-                        System.out.println("Crawled: " + link);
+                        //System.out.println("Crawled: " + link);
                     }
 
                 });
@@ -72,8 +73,7 @@ public class WebCrawler {
             SearchRepository.setStatus(statusDTO.getId(), StatusEnum.DONE);
 
         } catch (IOException ioe) {
-            //TODO tratar erros
-            System.out.println("Erro.");
+            LOGGER.error("Error during process: id = {}, {}", searchId, ioe.getMessage());
         }
 
     }
@@ -125,7 +125,7 @@ public class WebCrawler {
         List<String> links = new ArrayList<>();
 
         //Pattern pattern = Pattern.compile(hrefRegex);
-        Pattern pattern = Pattern.compile("href\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
+        Pattern pattern = Pattern.compile(hrefRegex);
         Matcher matcher = pattern.matcher(content);
 
         while (matcher.find()) {
