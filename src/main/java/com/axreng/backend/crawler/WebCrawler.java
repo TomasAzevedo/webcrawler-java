@@ -15,10 +15,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static java.util.regex.Pattern.CASE_INSENSITIVE;
+
 public class WebCrawler {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(WebCrawler.class);
-    private final String hrefRegex = "href\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>";
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebCrawler.class);
 
 
     /**
@@ -80,33 +81,47 @@ public class WebCrawler {
 
 
     /**
-     * Método que realiza a busca pela palavra chave.
+     * Method that performs the search for the keyword.
      *
-     * @param keyword - palavre chave da busca.
-     * @param content - conteúdo retornado pela url.
+     * @param keyword - keyword for the search..
+     * @param content - content where search will be carried out.
      */
-    private boolean find(String keyword, String content) {
+    public boolean find(String keyword, String content) {
 
-        Pattern pattern = Pattern.compile(keyword);
+        if (null == keyword || keyword.isBlank()) {
+            return false;
+        }
+
+        boolean found;
+
+        Pattern pattern = Pattern.compile(keyword, CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(content);
 
-        return matcher.find();
+        found = matcher.find();
+
+        if (!found) {
+            // Try without html tags and comments
+            matcher = pattern.matcher(content.replaceAll("<!--.*?-->", "").replaceAll("<[^>]+>", ""));
+            found = matcher.find();
+        }
+
+        return found;
 
     }
 
 
     /**
-     * Método para instaciar um novo StatusDTO.
+     * Method to instantiate a new StatusDTO.
      *
-     * @param searchId - id da busca.
-     * @return
+     * @param searchId - search id.
+     * @return new StatusDTO
      */
     private StatusDTO getNewSatusDTO(String searchId) {
 
         StatusDTO statusDTO = new StatusDTO();
 
         statusDTO.setId(searchId);
-        statusDTO.setUrls(new ArrayList());
+        statusDTO.setUrls(new ArrayList<String>());
         statusDTO.setStatus(StatusEnum.ACTIVE.toString());
 
         return statusDTO;
@@ -124,8 +139,7 @@ public class WebCrawler {
 
         List<String> links = new ArrayList<>();
 
-        //Pattern pattern = Pattern.compile(hrefRegex);
-        Pattern pattern = Pattern.compile(hrefRegex);
+        Pattern pattern = Pattern.compile("href\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
         Matcher matcher = pattern.matcher(content);
 
         while (matcher.find()) {
@@ -142,18 +156,18 @@ public class WebCrawler {
 
 
     /**
-     * Método que retorna o conteúdo de uma determinada url.
-     * Se a url fornecida não for válida o método pega a próxima da fila.
+     * Returns the content of a given url.
+     * If the provided url is not valid, the method takes the next one in the queue.
      *
-     * @param crawledUrl - url fornecida para obter o conteúdo.
-     * @param queue      - fila de urls.
-     * @return
-     * @throws IOException
+     * @param crawledUrl - url provided to get the content..
+     * @param queue      - URL queue.
+     * @return content of a given url.
+     * @throws IOException for errors with the url
      */
     private String getContent(StringBuilder crawledUrl, Queue<String> queue) throws IOException {
 
         BufferedReader br = null;
-        URL url = null;
+        URL url;
         boolean validUrl = false;
 
         while (!validUrl) {
@@ -173,7 +187,7 @@ public class WebCrawler {
         }
 
         StringBuilder sb = new StringBuilder();
-        String content = null;
+        String content;
 
         while ((content = br.readLine()) != null) {
             sb.append(content);
