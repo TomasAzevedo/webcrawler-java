@@ -29,6 +29,11 @@ public class CrawlerService {
             throw new IllegalArgumentException("You must enter at least one keyword for the search.");
         }
 
+        if (searchDTO.getKeyword().length() < 4 ||
+            searchDTO.getKeyword().length() > 32) {
+            throw new IllegalArgumentException("The keyword must be between 4 and 32 characters long.");
+        }
+
         WebCrawler webCrawler = new WebCrawler();
         String searchId = generateSearchId();
 
@@ -59,7 +64,7 @@ public class CrawlerService {
      * @return unique id.
      */
     private final String generateSearchId() {
-        return UUID.randomUUID().toString().replace("-", "");
+        return UUID.randomUUID().toString().replace("-", "").substring(0,8);
     }
 
 }

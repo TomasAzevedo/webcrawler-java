@@ -29,14 +29,36 @@ public class CrawlerControllerTest {
     public static void beforeClass() throws Exception {
         Main.main(null);
         awaitInitialization();
-        System.out.println("=========> before all");
     }
 
 
     @AfterAll
     public static void afterClass() {
         Spark.stop();
-        System.out.println("=========> after all");
+    }
+
+
+    @Test
+    public void the_keyword_must_be_between_4_and_32_characters_long() {
+
+        // Less than 4
+        TestResponse res1 = request("POST", "/crawl", toJson(new SearchDTO("123")));
+
+        assert res1 != null;
+        assertEquals(400, res1.status);
+
+        // More than 32
+        TestResponse res2 = request("POST", "/crawl", toJson(new SearchDTO("123456789012345678901234567890123")));
+
+        assert res2 != null;
+        assertEquals(400, res2.status);
+
+        // Between 4 and 32
+        TestResponse res3 = request("POST", "/crawl", toJson(new SearchDTO("12345678901234567890123456789012")));
+
+        assert res3 != null;
+        assertEquals(200, res3.status);
+
     }
 
 
@@ -44,7 +66,6 @@ public class CrawlerControllerTest {
     @Order(1)
     public void a_new_search_with_an_impossible_keyword_must_be_started() {
 
-        System.out.println("=========> first test");
         SearchDTO searchDTO = new SearchDTO("tomasalvesazevedoasdadsasdasd");
 
         TestResponse res = request("POST", "/crawl", toJson(searchDTO));
@@ -78,7 +99,7 @@ public class CrawlerControllerTest {
     @Test
     public void special_character_must_be_accepted() {
 
-        SearchDTO searchDTO = new SearchDTO("ã");
+        SearchDTO searchDTO = new SearchDTO("ãasdd");
 
         TestResponse res = request("POST", "/crawl", toJson(searchDTO));
 
@@ -167,8 +188,7 @@ public class CrawlerControllerTest {
     private TestResponse request(String method, String path, String json) {
 
         try {
-
-            URL url = new URL("http://localhost:4567" + path);
+            URL url = new URL("http://0.0.0.0:4567" + path);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json; utf-8");

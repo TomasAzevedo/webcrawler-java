@@ -39,6 +39,7 @@ public class WebCrawler {
 
             Queue<String> queue = new LinkedList<>();
             Set<String> marked = new HashSet<>();
+            Set<String> results = new HashSet<>();
 
             queue.add(root);
 
@@ -46,7 +47,7 @@ public class WebCrawler {
 
                 StringBuilder crawledUrl = new StringBuilder(queue.poll());
 
-                if (marked.size() > maxResults && maxResults > -1) {
+                if (results.size() >= maxResults && maxResults > -1) {
                     SearchRepository.setStatus(statusDTO.getId(), StatusEnum.DONE);
                     return;
                 }
@@ -54,6 +55,7 @@ public class WebCrawler {
                 String content = getContent(crawledUrl, queue);
 
                 if (find(keyword, content)) {
+                    results.add(crawledUrl.toString());
                     SearchRepository.addUrl(statusDTO.getId(), crawledUrl.toString());
                 }
 
@@ -64,7 +66,6 @@ public class WebCrawler {
                     if (!link.isEmpty() && !marked.contains(link)) {
                         marked.add(link);
                         queue.add(link);
-                        //System.out.println("Crawled: " + link);
                     }
 
                 });
