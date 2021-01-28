@@ -102,7 +102,9 @@ public class WebCrawler {
 
         if (!found) {
             // Try without html tags and comments
-            matcher = pattern.matcher(content.replaceAll("<!--.*?-->", "").replaceAll("<[^>]+>", ""));
+            matcher = pattern.matcher(content.trim()
+                                             .replaceAll("<!--.*?-->", "")
+                                             .replaceAll("<[^>]+>", ""));
             found = matcher.find();
         }
 

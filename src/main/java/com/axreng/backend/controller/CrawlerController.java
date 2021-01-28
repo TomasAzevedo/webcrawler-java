@@ -21,28 +21,23 @@ public class CrawlerController {
             }
 
             res.status(404);
-            return new ResponseError("No search found with this id.", req.params("id"));
+            return new ResponseError(String.valueOf(res.status()), "No search found with this id.", req.params("id"));
 
         }, json());
 
 
         post("/crawl", (req, res) -> crawlerService.search(fromJson(req.body(), SearchDTO.class)), json());
 
+        before((req, res) -> {
+            res.type("application/json");
+        });
 
         exception(IllegalArgumentException.class, (e, req, res) -> {
             res.status(400);
-            res.body(toJson(new ResponseError(e)));
+            res.body(toJson(new ResponseError(String.valueOf(res.status()), e)));
         });
 
-
-        notFound((req, res) -> {
-            return toJson(new ResponseError("Method not found."));
-        });
-
-
-        after((req, res) -> {
-            res.type("application/json");
-        });
+        notFound((req, res) -> toJson(new ResponseError(String.valueOf(res.status()), "Method not found.")));
 
 
     }
